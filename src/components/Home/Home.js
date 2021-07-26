@@ -11,12 +11,8 @@ import HomeStyles from './Home.module.css';
 const POSTS_PER_PAGE = 6;
 
 const FETCH_PUBLISHED_REVIEWS_QUERY = gql`
-  query fetchPublishedPosts(
-    $input: PostWhereInput!
-    $first: Int!
-    $skip: Int!
-  ) {
-    posts(where: $input, orderBy: createdAt_ASC, first: $first, skip: $skip) {
+  query fetchPublishedPosts($first: Int!, $skip: Int!) {
+    posts(orderBy: createdAt_ASC, first: $first, skip: $skip) {
       title
       body
       likes
@@ -26,19 +22,12 @@ const FETCH_PUBLISHED_REVIEWS_QUERY = gql`
         username
       }
       image
-    }
-    postsConnection {
-      edges {
-        node {
-          status
-        }
-      }
+      stage
     }
   }
 `;
 
 const publishedReviewsQueryVars = {
-  input: { status: 'PUBLISHED' },
   skip: 0,
   first: POSTS_PER_PAGE,
 };
@@ -56,18 +45,14 @@ const Home = props => {
         if (loading) return <Spinner />;
         if (error) {
           return (
-            <Notification
-              autoHideDuration={1000}
-              closeable
-              kind={KIND.negative}
-            >
+            <Notification closeable kind={KIND.negative}>
               {`Error! ${error.message}`}
             </Notification>
           );
         }
 
-        const totalPublishedPostsCount = data.postsConnection.edges.filter(
-          edge => edge.node.status === 'PUBLISHED'
+        const totalPublishedPostsCount = data.posts.filter(
+          post => post.stage === 'PUBLISHED'
         ).length;
 
         setAreMorePosts(
